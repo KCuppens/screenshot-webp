@@ -1,0 +1,70 @@
+{
+  "name": "webp-screenshot-tests",
+  "version": "1.0.0",
+  "description": "Advanced testing suite for Screenshot WebP Library",
+  "private": true,
+  "scripts": {
+    "test": "node run-all-tests.js",
+    "test:unit": "cross-env SKIP_PERFORMANCE_TESTS=true SKIP_STRESS_TESTS=true node run-all-tests.js",
+    "test:performance": "mocha performance/**/*.test.js --timeout 600000 --reporter spec",
+    "test:stress": "mocha stress/**/*.test.js --timeout 3600000 --reporter spec --bail",
+    "test:integration": "mocha integration/**/*.test.js --timeout 300000 --reporter spec",
+    "test:ci": "cross-env SKIP_STRESS_TESTS=true GENERATE_REPORTS=false FAIL_FAST=true node run-all-tests.js",
+    "test:memory-profile": "clinic doctor -- node run-all-tests.js",
+    "test:cpu-profile": "0x -- node run-all-tests.js",
+    "benchmark": "node performance/run-benchmarks.js",
+    "coverage": "nyc --reporter=html --reporter=text mocha unit/**/*.test.js integration/**/*.test.js",
+    "lint": "eslint . --fix",
+    "clean": "rimraf reports results coverage .nyc_output",
+    "report": "node generate-reports.js"
+  },
+  "dependencies": {
+    "benchmark": "^2.1.4",
+    "chai": "^4.3.10",
+    "cross-env": "^7.0.3",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "nyc": "^15.1.0",
+    "rimraf": "^5.0.5"
+  },
+  "optionalDependencies": {
+    "0x": "^5.5.0",
+    "clinic": "^12.1.0",
+    "memwatch-next": "^0.3.0",
+    "playwright": "^1.40.1",
+    "sharp": "^0.32.6"
+  },
+  "nyc": {
+    "include": [
+      "../src/**/*.js"
+    ],
+    "exclude": [
+      "**/*.test.js",
+      "**/node_modules/**",
+      "**/build/**"
+    ],
+    "reporter": [
+      "text",
+      "html",
+      "lcov"
+    ],
+    "report-dir": "coverage",
+    "check-coverage": true,
+    "lines": 80,
+    "functions": 80,
+    "branches": 70,
+    "statements": 80
+  },
+  "mocha": {
+    "timeout": 300000,
+    "reporter": "spec",
+    "exit": true,
+    "recursive": true
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

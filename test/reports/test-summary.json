@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-09-07T10:47:30.289Z",
+  "platform": "win32",
+  "arch": "x64",
+  "nodeVersion": "v20.11.1",
+  "cpuCount": 16,
+  "totalMemory": 32,
+  "testSuites": {
+    "unit": {
+      "success": true,
+      "testCount": 25,
+      "passCount": 25,
+      "failCount": 0,
+      "skipCount": 0,
+      "stdout": "\nUsing mock addon for testing infrastructure\nUsing mock addon for testing infrastructure\n\n  Memory Pool Unit Tests\n    Buffer Allocation and Deallocation\n      ✔ should allocate buffers from the pool\n      ✔ should reuse buffers of the same size\n      ✔ should handle pool size limits correctly\n    Thread Safety Validation\n      ✔ should handle concurrent allocations safely\n    Memory Leak Detection\n      ✔ should not leak memory over multiple allocation cycles\n      ✔ should clean up expired buffers (108ms)\n    Pool Statistics Accuracy\n      ✔ should track buffer creation statistics accurately\n      ✔ should track peak memory usage correctly\n    Error Handling\n      ✔ should handle invalid buffer sizes gracefully\n      ✔ should handle buffer return errors gracefully\n\nSharp not available - some tests will be skipped\nDetected SIMD capabilities: SSE2, SSE4.1, AVX2\nWebP SIMD optimizations: SIMD optimizations enabled for pixel conversion and WebP encoding\nSmall (256x256): 50.07 MP/s (19.63ms for 15 iterations)\nMedium (1024x768): 86.14 MP/s (9.13ms for 1 iterations)\nLarge (1920x1080): 78.40 MP/s (26.45ms for 1 iterations)\nUltra (3840x2160): 76.65 MP/s (108.21ms for 1 iterations)\nSIMD performance: 316.33ms for 10 iterations\nSIMD WebP encoding: 6.64ms, 11.2:1 compression\nSolid Color: 11.200341807306131:1 compression ratio\nGradient: 11.200341807306131:1 compression ratio\nChess Pattern: 11.200341807306131:1 compression ratio\nRandom Noise: 11.200341807306131:1 compression ratio\n\n  SIMD Converter Unit Tests\n    CPU Feature Detection\n      ✔ should detect SIMD capabilities correctly\n      ✔ should provide WebP SIMD optimization info\n    Pixel Format Conversion\n      ✔ should convert BGRA to RGBA correctly\n      ✔ should convert RGBA to RGB correctly\n      ✔ should perform in-place BGRA to RGBA conversion\n    SIMD Performance Benchmarks\n      ✔ should perform BGRA->RGBA conversion efficiently for Small (256x256)\n      ✔ should perform BGRA->RGBA conversion efficiently for Medium (1024x768)\n      ✔ should perform BGRA->RGBA conversion efficiently for Large (1920x1080) (51ms)\n      ✔ should perform BGRA->RGBA conversion efficiently for Ultra (3840x2160) (183ms)\n      ✔ should demonstrate SIMD performance advantage (360ms)\n    Advanced SIMD WebP Encoding\n      ✔ should encode using SIMD-optimized WebP encoder\n      ✔ should handle various image formats correctly (42ms)\n    Error Handling and Edge Cases\n      ✔ should handle invalid input dimensions gracefully\n      ✔ should handle mismatched buffer sizes\n      ✔ should handle extreme image dimensions\n\n\n  25 passing (1s)\n\n",
+      "stderr": "",
+      "exitCode": 0,
+      "duration": 2321,
+      "testFiles": 2
+    },
+    "integration": {
+      "success": false,
+      "testCount": 0,
+      "passCount": 0,
+      "failCount": 0,
+      "skipCount": 0,
+      "stdout": "",
+      "stderr": "\n Exception during run: Error: Cannot find module '../../build/Release/webp_screenshot'\nRequire stack:\n- C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\integration\\streaming-pipeline.test.js\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1144:15)\n    at Module._load (node:internal/modules/cjs/loader:985:27)\n    at Module.require (node:internal/modules/cjs/loader:1235:19)\n    at require (node:internal/modules/helpers:176:18)\n    at Object.<anonymous> (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\integration\\streaming-pipeline.test.js:2:15)\n    at Module._compile (node:internal/modules/cjs/loader:1376:14)\n    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)\n    at Module.load (node:internal/modules/cjs/loader:1207:32)\n    at Module._load (node:internal/modules/cjs/loader:1023:12)\n    at cjsLoader (node:internal/modules/esm/translators:356:17)\n    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:305:7)\n    at ModuleJob.run (node:internal/modules/esm/module_job:218:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:329:24)\n    at async importModuleDynamicallyWrapper (node:internal/vm/module:431:15)\n    at async formattedImport (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:9:14)\n    at async exports.requireOrImport (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:42:28)\n    at async exports.loadFilesAsync (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:100:20)\n    at async singleRun (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\cli\\run-helpers.js:162:3)\n    at async exports.handler (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\cli\\run.js:375:5) {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: [\n    'C:\\\\Users\\\\kobec\\\\Documents\\\\projects\\\\screenshot-webp\\\\test\\\\integration\\\\streaming-pipeline.test.js'\n  ]\n}\n",
+      "exitCode": 1,
+      "duration": 721,
+      "testFiles": 1
+    },
+    "performance": {
+      "success": false,
+      "testCount": 0,
+      "passCount": 0,
+      "failCount": 0,
+      "skipCount": 0,
+      "stdout": "",
+      "stderr": "\n Exception during run: C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\performance\\core-benchmarks.test.js:259\n          const result = await addon.captureScreenshot({ display: 0 });\n                         ^^^^^\n\nSyntaxError: await is only valid in async functions and the top level bodies of modules\n    at internalCompileFunction (node:internal/vm:77:18)\n    at wrapSafe (node:internal/modules/cjs/loader:1288:20)\n    at Module._compile (node:internal/modules/cjs/loader:1340:27)\n    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)\n    at Module.load (node:internal/modules/cjs/loader:1207:32)\n    at Module._load (node:internal/modules/cjs/loader:1023:12)\n    at cjsLoader (node:internal/modules/esm/translators:356:17)\n    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:305:7)\n    at ModuleJob.run (node:internal/modules/esm/module_job:218:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:329:24)\n    at async importModuleDynamicallyWrapper (node:internal/vm/module:431:15)\n    at async formattedImport (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:9:14)\n    at async exports.requireOrImport (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:42:28)\n    at async exports.loadFilesAsync (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:100:20)\n    at async singleRun (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\cli\\run-helpers.js:162:3)\n    at async exports.handler (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\cli\\run.js:375:5)\n",
+      "exitCode": 1,
+      "duration": 825,
+      "testFiles": 1
+    },
+    "quality": {
+      "success": false,
+      "testCount": 0,
+      "passCount": 0,
+      "failCount": 0,
+      "skipCount": 0,
+      "stdout": "",
+      "stderr": "\n Exception during run: Error: \nSomething went wrong installing the \"sharp\" module\n\nCannot find module '../build/Release/sharp-win32-x64.node'\nRequire stack:\n- C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\sharp\\lib\\sharp.js\n- C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\sharp\\lib\\constructor.js\n- C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\sharp\\lib\\index.js\n- C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\quality\\webp-quality.test.js\n\nPossible solutions:\n- Install with verbose logging and look for errors: \"npm install --ignore-scripts=false --foreground-scripts --verbose sharp\"\n- Install for the current win32-x64 runtime: \"npm install --platform=win32 --arch=x64 sharp\"\n- Consult the installation documentation: https://sharp.pixelplumbing.com/install\n    at Object.<anonymous> (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\sharp\\lib\\sharp.js:37:9)\n    at Module._compile (node:internal/modules/cjs/loader:1376:14)\n    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)\n    at Module.load (node:internal/modules/cjs/loader:1207:32)\n    at Module._load (node:internal/modules/cjs/loader:1023:12)\n    at Module.require (node:internal/modules/cjs/loader:1235:19)\n    at require (node:internal/modules/helpers:176:18)\n    at Object.<anonymous> (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\sharp\\lib\\constructor.js:11:1)\n    at Module._compile (node:internal/modules/cjs/loader:1376:14)\n    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)\n    at Module.load (node:internal/modules/cjs/loader:1207:32)\n    at Module._load (node:internal/modules/cjs/loader:1023:12)\n    at Module.require (node:internal/modules/cjs/loader:1235:19)\n    at require (node:internal/modules/helpers:176:18)\n    at Object.<anonymous> (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\sharp\\lib\\index.js:6:15)\n    at Module._compile (node:internal/modules/cjs/loader:1376:14)\n    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)\n    at Module.load (node:internal/modules/cjs/loader:1207:32)\n    at Module._load (node:internal/modules/cjs/loader:1023:12)\n    at Module.require (node:internal/modules/cjs/loader:1235:19)\n    at require (node:internal/modules/helpers:176:18)\n    at Object.<anonymous> (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\quality\\webp-quality.test.js:2:15)\n    at Module._compile (node:internal/modules/cjs/loader:1376:14)\n    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)\n    at Module.load (node:internal/modules/cjs/loader:1207:32)\n    at Module._load (node:internal/modules/cjs/loader:1023:12)\n    at cjsLoader (node:internal/modules/esm/translators:356:17)\n    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:305:7)\n    at ModuleJob.run (node:internal/modules/esm/module_job:218:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:329:24)\n    at async importModuleDynamicallyWrapper (node:internal/vm/module:431:15)\n    at async formattedImport (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:9:14)\n    at async exports.requireOrImport (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:42:28)\n    at async exports.loadFilesAsync (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:100:20)\n    at async singleRun (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\cli\\run-helpers.js:162:3)\n    at async exports.handler (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\cli\\run.js:375:5)\n",
+      "exitCode": 1,
+      "duration": 920,
+      "testFiles": 1
+    },
+    "security": {
+      "success": false,
+      "testCount": 0,
+      "passCount": 0,
+      "failCount": 0,
+      "skipCount": 0,
+      "stdout": "",
+      "stderr": "\n Exception during run: Error: Cannot find module '../../build/Release/webp_screenshot'\nRequire stack:\n- C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\security\\buffer-safety.test.js\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1144:15)\n    at Module._load (node:internal/modules/cjs/loader:985:27)\n    at Module.require (node:internal/modules/cjs/loader:1235:19)\n    at require (node:internal/modules/helpers:176:18)\n    at Object.<anonymous> (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\security\\buffer-safety.test.js:2:15)\n    at Module._compile (node:internal/modules/cjs/loader:1376:14)\n    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)\n    at Module.load (node:internal/modules/cjs/loader:1207:32)\n    at Module._load (node:internal/modules/cjs/loader:1023:12)\n    at cjsLoader (node:internal/modules/esm/translators:356:17)\n    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:305:7)\n    at ModuleJob.run (node:internal/modules/esm/module_job:218:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:329:24)\n    at async importModuleDynamicallyWrapper (node:internal/vm/module:431:15)\n    at async formattedImport (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:9:14)\n    at async exports.requireOrImport (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:42:28)\n    at async exports.loadFilesAsync (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\nodejs\\esm-utils.js:100:20)\n    at async singleRun (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\cli\\run-helpers.js:162:3)\n    at async exports.handler (C:\\Users\\kobec\\Documents\\projects\\screenshot-webp\\test\\node_modules\\mocha\\lib\\cli\\run.js:375:5) {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: [\n    'C:\\\\Users\\\\kobec\\\\Documents\\\\projects\\\\screenshot-webp\\\\test\\\\security\\\\buffer-safety.test.js'\n  ]\n}\n",
+      "exitCode": 1,
+      "duration": 777,
+      "testFiles": 1
+    }
+  },
+  "summary": {
+    "totalSuites": 5,
+    "successfulSuites": 1,
+    "totalTests": 25,
+    "totalPassed": 25,
+    "totalFailed": 0,
+    "totalSkipped": 0,
+    "totalDuration": 5564
+  }
+}

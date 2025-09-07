@@ -1,0 +1,344 @@
+name: Build and Test WebP Screenshot
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # Windows builds
+  build-windows:
+    name: Build Windows (${{ matrix.arch }})
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [x64, ia32]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        architecture: ${{ matrix.arch }}
+        
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.3
+      
+    - name: Install Python for node-gyp
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Cache node modules
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+          
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build native module
+      run: npm run build
+      env:
+        npm_config_target_arch: ${{ matrix.arch }}
+        npm_config_disturl: https://electronjs.org/headers
+        npm_config_runtime: node
+        npm_config_build_from_source: true
+        
+    - name: Run tests
+      run: npm test
+      env:
+        CI: true
+        
+    - name: Run performance benchmarks
+      run: npm run test:performance
+      continue-on-error: true
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-${{ matrix.arch }}-build
+        path: |
+          build/
+          !build/**/*.obj
+          !build/**/*.pdb
+          
+  # macOS builds  
+  build-macos:
+    name: Build macOS (${{ matrix.arch }})
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        
+    - name: Cache node modules
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+          
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build native module
+      run: npm run build
+      env:
+        npm_config_target_arch: ${{ matrix.arch }}
+        CC: clang
+        CXX: clang++
+        
+    - name: Run tests
+      run: npm test
+      env:
+        CI: true
+        
+    - name: Run performance benchmarks
+      run: npm run test:performance
+      continue-on-error: true
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-${{ matrix.arch }}-build
+        path: build/
+        
+  # Linux builds
+  build-linux:
+    name: Build Linux (${{ matrix.distro }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distro: 
+          - { name: ubuntu-20.04, image: ubuntu:20.04 }
+          - { name: ubuntu-22.04, image: ubuntu:22.04 }
+          - { name: fedora-38, image: fedora:38 }
+          - { name: debian-11, image: debian:11 }
+    
+    container:
+      image: ${{ matrix.distro.image }}
+      
+    steps:
+    - name: Install base dependencies (Ubuntu/Debian)
+      if: contains(matrix.distro.image, 'ubuntu') || contains(matrix.distro.image, 'debian')
+      run: |
+        apt-get update
+        apt-get install -y curl git build-essential python3 python3-pip
+        apt-get install -y libx11-dev libxrandr-dev libxfixes-dev libxext-dev
+        apt-get install -y libwayland-dev libwayland-client0 pkg-config
+        apt-get install -y xvfb x11-apps
+        
+    - name: Install base dependencies (Fedora)
+      if: contains(matrix.distro.image, 'fedora')
+      run: |
+        dnf install -y curl git gcc-c++ python3 python3-pip npm nodejs
+        dnf install -y libX11-devel libXrandr-devel libXfixes-devel libXext-devel
+        dnf install -y wayland-devel wayland-protocols-devel pkgconfig
+        dnf install -y xorg-x11-server-Xvfb xorg-x11-apps
+        
+    - name: Install Node.js (Ubuntu/Debian)
+      if: contains(matrix.distro.image, 'ubuntu') || contains(matrix.distro.image, 'debian')
+      run: |
+        curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+        apt-get install -y nodejs
+        
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Cache node modules
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-${{ matrix.distro.name }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.distro.name }}-node-
+          
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build native module
+      run: npm run build
+      
+    - name: Start virtual display
+      run: |
+        Xvfb :99 -screen 0 1024x768x24 &
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+        
+    - name: Run tests
+      run: npm test
+      env:
+        CI: true
+        DISPLAY: :99
+        
+    - name: Run Linux-specific tests
+      run: npm test -- tests/unit/linux-screenshot.test.js
+      env:
+        DISPLAY: :99
+      continue-on-error: true
+      
+    - name: Run performance benchmarks
+      run: npm run test:performance
+      env:
+        DISPLAY: :99
+      continue-on-error: true
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-${{ matrix.distro.name }}-build
+        path: build/
+        
+  # Cross-platform integration tests
+  integration-tests:
+    name: Integration Tests
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        
+    - name: Download all build artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: List build artifacts
+      run: find . -name "*-build" -type d -exec ls -la {} \;
+      
+    - name: Verify cross-platform compatibility
+      run: |
+        echo "✅ Windows builds:"
+        ls -la windows-*-build/ || echo "No Windows builds"
+        echo "✅ macOS builds:"  
+        ls -la macos-*-build/ || echo "No macOS builds"
+        echo "✅ Linux builds:"
+        ls -la linux-*-build/ || echo "No Linux builds"
+        
+  # Performance benchmarking
+  benchmark:
+    name: Performance Benchmark
+    runs-on: ${{ matrix.os }}
+    needs: [build-windows, build-macos, build-linux]
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        
+    - name: Install system dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libx11-dev libxrandr-dev libxfixes-dev libxext-dev
+        sudo apt-get install -y xvfb x11-apps
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build native module
+      run: npm run build
+      
+    - name: Start virtual display (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        Xvfb :99 -screen 0 1920x1080x24 &
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+        
+    - name: Run comprehensive benchmarks
+      run: npm run test:performance
+      env:
+        DISPLAY: ${{ runner.os == 'Linux' && ':99' || '' }}
+        BENCHMARK_ITERATIONS: 10
+        BENCHMARK_DETAILED: true
+      continue-on-error: true
+      
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-${{ runner.os }}-results
+        path: tests/results/
+      continue-on-error: true
+      
+  # Release builds (only on release)
+  release:
+    name: Release Build
+    if: github.event_name == 'release'
+    needs: [build-windows, build-macos, build-linux, integration-tests]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        registry-url: 'https://registry.npmjs.org'
+        
+    - name: Download all build artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Prepare release package
+      run: |
+        mkdir -p release
+        echo "Packaging release artifacts..."
+        find . -name "*-build" -type d
+        
+    - name: Create release archive
+      run: |
+        tar -czf webp-screenshot-${{ github.event.release.tag_name }}.tar.gz \
+          --exclude=node_modules \
+          --exclude=.git \
+          --exclude=tests/results \
+          .
+          
+    - name: Upload release asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./webp-screenshot-${{ github.event.release.tag_name }}.tar.gz
+        asset_name: webp-screenshot-${{ github.event.release.tag_name }}.tar.gz
+        asset_content_type: application/gzip
+        
+    - name: Publish to npm (if configured)
+      if: env.NPM_TOKEN != ''
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      continue-on-error: true

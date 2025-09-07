@@ -1,0 +1,131 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.npm
+.yarn-integrity
+.node_repl_history
+*.tgz
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build directories
+build/
+dist/
+out/
+Release/
+Debug/
+*.node
+
+# Native addon build files
+build/
+*.target.mk
+*.Makefile
+*.gypi
+*.includes
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-workspace
+*.sublime-project
+
+# Test coverage
+coverage/
+*.lcov
+.nyc_output/
+
+# Logs
+logs/
+*.log
+
+# Testing
+test-results/
+*.test.js.snap
+screenshots/
+!screenshots/.gitkeep
+
+# Performance and benchmarking
+performance-results/
+benchmark-results/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Package lock files (optional - uncomment if you want to ignore)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# TypeScript
+*.tsbuildinfo
+.tscache/
+
+# ESLint
+.eslintcache
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Python (if using node-gyp)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# C++ build artifacts
+*.o
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.pch
+*.ipch
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.log
+*.lib
+*.a
+*.la
+*.lo
+*.def
+*.exp
+
+# Documentation build output
+docs/_build/
+docs/site/
+
+# Misc
+.cache/
+.parcel-cache/
+.nuxt/
+.next/
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.vscode-test/

@@ -1,0 +1,444 @@
+name: Advanced Testing Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run full test suite daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  # Quick validation job for PRs
+  quick-validation:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxrandr-dev libxfixes-dev libxext-dev
+          
+      - name: Install Node dependencies
+        run: |
+          npm ci
+          cd test && npm ci
+          
+      - name: Build native addon
+        run: npm run build
+        
+      - name: Run unit tests only
+        run: cd test && npm run test:unit
+        env:
+          SKIP_PERFORMANCE_TESTS: true
+          SKIP_STRESS_TESTS: true
+          GENERATE_REPORTS: false
+
+  # Comprehensive testing matrix
+  test-matrix:
+    if: github.event_name == 'push' || github.event_name == 'schedule'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [16, 18, 20]
+        include:
+          # GPU-enabled runners for performance testing
+          - os: ubuntu-latest
+            node-version: 18
+            gpu-enabled: true
+          - os: windows-latest  
+            node-version: 18
+            gpu-enabled: true
+        exclude:
+          # Reduce matrix size for scheduled runs
+          - os: macos-latest
+            node-version: 16
+          - os: windows-latest
+            node-version: 16
+    
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev libxrandr-dev libxfixes-dev libxext-dev \
+            libwayland-dev libwayland-client0 \
+            mesa-utils xvfb \
+            build-essential python3-dev
+            
+      - name: Install system dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install python@3.9
+          
+      - name: Install system dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install python3 --version=3.9.13 -y
+          
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install Node dependencies
+        run: |
+          npm ci
+          cd test && npm ci
+          
+      - name: Build native addon
+        run: npm run build
+        
+      - name: Setup virtual display (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1920x1080x24 &
+          sleep 3
+        
+      - name: Run comprehensive test suite
+        run: cd test && node run-all-tests.js
+        env:
+          SKIP_STRESS_TESTS: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
+          GENERATE_REPORTS: true
+          OUTPUT_FORMAT: detailed
+          MAX_PARALLEL_JOBS: 2
+          DISPLAY: ${{ matrix.os == 'ubuntu-latest' && ':99' || '' }}
+          
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports-${{ matrix.os }}-node${{ matrix.node-version }}
+          path: |
+            test/reports/
+            test/results/
+          retention-days: 7
+          
+      - name: Upload coverage reports
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '18'
+        uses: codecov/codecov-action@v3
+        with:
+          file: test/coverage/lcov.info
+          name: screenshot-webp-coverage
+          fail_ci_if_error: false
+
+  # Performance benchmarking job
+  performance-benchmarks:
+    if: github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev libxrandr-dev libxfixes-dev libxext-dev \
+            mesa-utils xvfb
+            
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd test && npm ci
+          
+      - name: Build native addon
+        run: npm run build
+        
+      - name: Setup virtual display
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 3840x2160x24 &  # 4K display for performance testing
+          sleep 3
+          
+      - name: Run performance benchmarks
+        run: cd test && npm run test:performance
+        env:
+          DISPLAY: :99
+          BENCHMARK_ITERATIONS: 10
+          
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-benchmarks
+          path: test/results/benchmark-results.json
+          retention-days: 30
+
+  # Stress testing job (only on schedule)
+  stress-tests:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 480  # 8 hours
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev libxrandr-dev libxfixes-dev libxext-dev \
+            mesa-utils xvfb htop iotop
+            
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd test && npm ci
+          
+      - name: Build native addon
+        run: npm run build
+        
+      - name: Setup virtual display
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 7680x4320x24 &  # 8K display for stress testing
+          sleep 3
+          
+      - name: Monitor system resources
+        run: |
+          htop -d 60 > system-monitor.log &
+          iostat 60 > io-monitor.log &
+        
+      - name: Run stress tests
+        run: cd test && npm run test:stress
+        env:
+          DISPLAY: :99
+          STRESS_TEST_DURATION: 14400  # 4 hours
+          
+      - name: Upload stress test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: stress-test-results
+          path: |
+            test/reports/
+            test/results/
+            system-monitor.log
+            io-monitor.log
+          retention-days: 14
+
+  # Security testing job
+  security-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd test && npm ci
+          
+      - name: Run security audit
+        run: |
+          npm audit --audit-level moderate
+          cd test && npm audit --audit-level moderate
+          
+      - name: Build native addon
+        run: npm run build
+        
+      - name: Run security tests
+        run: cd test && mocha security/**/*.test.js --timeout 300000
+        
+      - name: Run static analysis
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          # Install cppcheck for static analysis
+          sudo apt-get install -y cppcheck
+          cppcheck --enable=all --inconclusive --xml --xml-version=2 src/native/ 2> cppcheck-results.xml || true
+          
+      - name: Upload security results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-analysis
+          path: |
+            cppcheck-results.xml
+            test/reports/security-*.html
+          retention-days: 7
+
+  # Test results aggregation and reporting
+  aggregate-results:
+    if: always() && (github.event_name == 'push' || github.event_name == 'schedule')
+    needs: [test-matrix, performance-benchmarks, security-tests]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts/
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Install reporting dependencies
+        run: |
+          cd test
+          npm install --no-save chart.js html-pdf-node
+          
+      - name: Generate aggregated report
+        run: |
+          cd test
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          
+          // Aggregate all test results
+          const artifactsDir = '../artifacts';
+          const reports = [];
+          
+          if (fs.existsSync(artifactsDir)) {
+            const artifacts = fs.readdirSync(artifactsDir);
+            for (const artifact of artifacts) {
+              const summaryPath = path.join(artifactsDir, artifact, 'test-summary.json');
+              if (fs.existsSync(summaryPath)) {
+                const data = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                reports.push({ artifact, ...data });
+              }
+            }
+          }
+          
+          // Generate summary
+          const summary = {
+            timestamp: new Date().toISOString(),
+            totalReports: reports.length,
+            summary: reports.reduce((acc, report) => {
+              acc.totalTests += report.summary?.totalTests || 0;
+              acc.totalPassed += report.summary?.totalPassed || 0;
+              acc.totalFailed += report.summary?.totalFailed || 0;
+              return acc;
+            }, { totalTests: 0, totalPassed: 0, totalFailed: 0 }),
+            reports
+          };
+          
+          fs.writeFileSync('aggregated-results.json', JSON.stringify(summary, null, 2));
+          console.log('Aggregated Results:', JSON.stringify(summary, null, 2));
+          "
+          
+      - name: Upload aggregated results
+        uses: actions/upload-artifact@v3
+        with:
+          name: aggregated-test-results
+          path: test/aggregated-results.json
+          retention-days: 30
+          
+      - name: Create test summary comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let summary = '## 🧪 Test Results Summary\n\n';
+            
+            try {
+              const results = JSON.parse(fs.readFileSync('test/aggregated-results.json', 'utf8'));
+              
+              summary += `- **Total Tests**: ${results.summary.totalTests}\n`;
+              summary += `- **Passed**: ${results.summary.totalPassed} ✅\n`;
+              summary += `- **Failed**: ${results.summary.totalFailed} ❌\n`;
+              summary += `- **Success Rate**: ${((results.summary.totalPassed / results.summary.totalTests) * 100).toFixed(1)}%\n\n`;
+              
+              if (results.summary.totalFailed > 0) {
+                summary += '⚠️ Some tests failed. Please check the detailed reports in the artifacts.\n';
+              } else {
+                summary += '🎉 All tests passed successfully!\n';
+              }
+            } catch (error) {
+              summary += '⚠️ Could not parse test results.\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+  # Publish test results to GitHub Pages (for main branch)
+  publish-reports:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [aggregate-results]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download aggregated results
+        uses: actions/download-artifact@v3
+        with:
+          name: aggregated-test-results
+          path: reports/
+          
+      - name: Download test reports
+        uses: actions/download-artifact@v3
+        with:
+          path: reports/artifacts/
+          
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reports
+          destination_dir: test-reports

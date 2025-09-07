@@ -1,0 +1,14 @@
+{
+  "skipStressTests": true,
+  "skipPerformanceTests": false,
+  "maxParallelJobs": 2,
+  "testTimeout": 30000,
+  "outputFormat": "detailed",
+  "generateReports": true,
+  "failFast": false,
+  "performanceThresholds": {
+    "captureLatency": 200,
+    "encodeThroughput": 2,
+    "memoryEfficiency": 0.6
+  }
+}
